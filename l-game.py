@@ -183,19 +183,23 @@ def remove_previous_coin(chosen_coin):
     cells[coin['x']][coin['y']].has_coin = False
     load_image(coin['x'], coin['y'], img_white_square)
 
-def input_invalid(x, y):
+def input_invalid(target_x, target_y):
     current_color = ''
 
-    if(game_state == GameState.RED_TO_MOVE_BLOCK):
+    if(game_state == GameState.RED_TO_MOVE_BLOCK or game_state == GameState.RED_TO_MOVE_COIN):
         current_color = 'r'
     else:
         current_color = 'b'
 
-    if(cells[cell_x][cell_y].has_coin or (cells[cell_x][cell_y].color != 'w' and cells[cell_x][cell_y].color != current_color)):
-        return True
+    if(game_state == GameState.RED_TO_MOVE_COIN or game_state == GameState.BLUE_TO_MOVE_COIN):
+        if(cells[target_x][target_y].has_coin or cells[target_x][target_y].color != 'w'):
+            return True
+    else:
+        if(cells[target_x][target_y].has_coin or (cells[target_x][target_y].color != 'w' and cells[target_x][target_y].color != current_color)):
+            return True
 
     for _input in inputs:
-        if(_input['x'] == x and _input['y'] == y):
+        if(_input['x'] == target_x and _input['y'] == target_y):
             return True
     
 def has_full_block_overlap():
