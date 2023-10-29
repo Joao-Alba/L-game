@@ -66,8 +66,6 @@ coin2_position = {"x": 3, "y": 3}
 #coin1_position = {"x": 2, "y": 1}
 #coin2_position = {"x": 3, "y": 3}
 
-#draw start on screen
-
 message_text = "Vez do jogador vermelho"
 def advanceState():
     global game_state
@@ -85,10 +83,8 @@ def advanceState():
         case GameState.BLUE_TO_MOVE_COIN:
             game_state = GameState.RED_TO_MOVE_BLOCK
             message_text = "Vez do jogador vermelho mexer o L"
-
 advanceState()
 
-# Create 16 cells
 cells = [[Cell(0, 0) for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
 img_cells = [[None for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
 
@@ -98,17 +94,14 @@ for i in range(len(cells)):
         cells[i][j].y = j
 
 
-# Function to load an image onto a cell
 def load_image(cell_x, cell_y, image):
     img_cells[cell_x][cell_y] = image
 
-# Function to draw the grid
 def draw_grid():
     for i in range(GRID_SIZE + 1):
         pygame.draw.line(screen, BLACK, (i * CELL_SIZE, 0), (i * CELL_SIZE, CELL_SIZE * GRID_SIZE), 2)
         pygame.draw.line(screen, BLACK, (0, i * CELL_SIZE), (CELL_SIZE * GRID_SIZE, i * CELL_SIZE), 2)
 
-# Function to draw buttons and message
 def draw_buttons_and_message():
     button_height = 80
     button_width = 300
@@ -295,35 +288,140 @@ def get_block_direction(start_x, start_y):
     return None
 
 def draw_starting_objects():
-    for move in red_player_position['direction'].value:
-        x = red_player_position['start']['x'] + move['x']
-        y = red_player_position['start']['y'] + move['y']
-        cells[x][y].color = 'r'
-        load_image(x, y, img_red_square)
-    for move in blue_player_position['direction'].value:
-        x = blue_player_position['start']['x'] + move['x']
-        y = blue_player_position['start']['y'] + move['y']
-        cells[x][y].color = 'b'
-        load_image(x, y, img_blue_square)
+    draw_from_position(red_player_position, 'r', img_red_square)
+    draw_from_position(blue_player_position, 'b', img_blue_square)
     cells[coin1_position['x']][coin1_position['y']].has_coin = True
     load_image(coin1_position['x'], coin1_position['y'], img_coin1)
     cells[coin2_position['x']][coin2_position['y']].has_coin = True
     load_image(coin2_position['x'], coin2_position['y'], img_coin2)
     return
 
+def draw_from_position(player_position, player_color, player_color_img):
+    for move in player_position['direction'].value:
+        x = player_position['start']['x'] + move['x']
+        y = player_position['start']['y'] + move['y']
+        cells[x][y].color = player_color
+        load_image(x, y, player_color_img)
+
+def get_best_block_move():
+    current_color = ''
+    enemy_color = ''
+    current_player_position = None
+    current_color_img = None
+    if(game_state == GameState.RED_TO_MOVE_BLOCK or game_state == GameState.RED_TO_MOVE_COIN):
+        current_color = 'r'
+        enemy_color = 'b'
+        current_player_position = red_player_position
+        current_color_img = img_red_square
+    else:
+        current_color = 'b'
+        enemy_color = 'r'
+        current_player_position = blue_player_position
+        current_color_img = img_blue_square
+
+    least_possible_moves_enemy_player = 20
+    best_current_player_move = None
+    possible_moves_current_player = check_possible_moves_for(current_color)
+
+    for possible_move_current_player in possible_moves_current_player:
+        remove_previous_block(current_color)
+        draw_from_position(possible_move_current_player, current_color, current_color_img)
+        enemy_player_possible_move_number = len(check_possible_moves_for(enemy_color))
+        if(enemy_player_possible_move_number < least_possible_moves_enemy_player):
+            least_possible_moves_enemy_player = enemy_player_possible_move_number
+            best_current_player_move = possible_move_current_player
+            if(least_possible_moves_enemy_player == 0):
+                break
+
+    remove_previous_block(current_color)
+    draw_from_position(current_player_position, current_color, current_color_img)
+    return best_current_player_move
+
+def get_best_coin_move():
+    current_color = ''
+    enemy_color = ''
+    if(game_state == GameState.RED_TO_MOVE_BLOCK or game_state == GameState.RED_TO_MOVE_COIN):
+        current_color = 'r'
+        enemy_color = 'b'
+    else:
+        current_color = 'b'
+        enemy_color = 'r'
+
+    best_position_coin1 = try_every_position_coin(1)
+
+    best_position_coin2 = try_every_position_coin(2)
+    
+    if(best_position_coin1['move_number'] < best_position_coin2['move_number']):
+        return {"coin": 1, "position": {'x': best_position_coin1['x'], 'y': best_position_coin1['y']}}
+    else:
+        return {"coin": 2, "position": {'x': best_position_coin2['x'], 'y': best_position_coin2['y']}}
+
+def try_every_position_coin(coin):
+    least_possible_moves_enemy_player_coin = 20
+    return_best_coin_position = None
+
+    global coin1_position
+    global coin2_position
+
+    for i in range(len(cells)):
+        for j in range(len(cells[i])):
+            cell = cells[i][j]
+            if(not cell.has_coin and cell.color == 'w'):
+                if(coin == 1):
+                    original_coin_position = coin1_position
+                    remove_previous_coin(1)
+
+                    cells[cell.x][cell.y].has_coin = True
+                    load_image(cell.x, cell.y, img_coin1)
+                    coin1_position = {'x': cell.x, 'y': cell.y}
+                    
+                    enemy_player_possible_move_number = len(check_possible_moves_for(enemy_color))
+
+                    if(enemy_player_possible_move_number < least_possible_moves_enemy_player_coin):
+                        least_possible_moves_enemy_player_coin = enemy_player_possible_move_number
+                        return_best_coin_position = {'x': cell.x, 'y': cell.y, "move_number": least_possible_moves_enemy_player_coin}
+
+                    remove_previous_coin(1)
+                    cells[original_coin_position['x']][original_coin_position['y']].has_coin = True
+                    load_image(original_coin_position['x'], original_coin_position['y'], img_coin1)
+                    coin1_position = {'x': original_coin_position['x'], 'y': original_coin_position['y']}
+                else:
+                    original_coin_position = coin2_position
+                    remove_previous_coin(2)
+
+                    cells[cell.x][cell.y].has_coin = True
+                    load_image(cell.x, cell.y, img_coin2)
+                    coin2_position = {'x': cell.x, 'y': cell.y}
+                    
+                    enemy_player_possible_move_number = len(check_possible_moves_for(enemy_color))
+
+                    if(enemy_player_possible_move_number < least_possible_moves_enemy_player_coin):
+                        least_possible_moves_enemy_player_coin = enemy_player_possible_move_number
+                        return_best_coin_position = {'x': cell.x, 'y': cell.y, "move_number": least_possible_moves_enemy_player_coin}
+
+                    remove_previous_coin(2)
+                    cells[original_coin_position['x']][original_coin_position['y']].has_coin = True
+                    load_image(original_coin_position['x'], original_coin_position['y'], img_coin2)
+                    coin2_position = {'x': original_coin_position['x'], 'y': original_coin_position['y']}
+
+    return return_best_coin_position
+
 message_before_invalid = ''
 chosen_coin = 9
 draw_starting_objects()
-# Main game loop
+game_over = False
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+        if(game_over):
+            continue
         elif event.type == pygame.MOUSEBUTTONDOWN:
             x, y = event.pos
             if x >= GRID_SIZE * CELL_SIZE:
-                if(game_state == GameState.RED_TO_MOVE_COIN or game_state == GameState.BLUE_TO_MOVE_COIN):
+                if(game_state == GameState.RED_TO_MOVE_COIN):
                     if y < CELL_SIZE:
                         chosen_coin = 1
                     elif y < 2 * CELL_SIZE:
@@ -336,19 +434,24 @@ while True:
                 cell_x = x // CELL_SIZE
                 cell_y = y // CELL_SIZE
 
-                if((game_state == GameState.RED_TO_MOVE_COIN or game_state == GameState.BLUE_TO_MOVE_COIN) and (chosen_coin == 9 or chosen_coin == 0)):
+                if((game_state == GameState.RED_TO_MOVE_COIN) and (chosen_coin == 9 or chosen_coin == 0)):
                     message_before_invalid = message_text
                     message_text = "Escolha uma moeda primeiro"
                     continue
 
-                if(input_invalid(cell_x, cell_y)):
+                if(input_invalid(cell_x, cell_y) and (game_state == GameState.RED_TO_MOVE_BLOCK or game_state == GameState.RED_TO_MOVE_COIN)):
                     message_before_invalid = message_text
                     message_text = "Input inválido"
                     continue
 
                 inputs.append({"x": cell_x, "y": cell_y})
 
-                if(game_state == GameState.RED_TO_MOVE_BLOCK or game_state == GameState.BLUE_TO_MOVE_BLOCK):
+                if(game_state == GameState.RED_TO_MOVE_BLOCK or game_state == GameState.RED_TO_MOVE_COIN):
+                    enemy_color = 'b'
+                else:
+                    enemy_color = 'r'
+
+                if(game_state == GameState.RED_TO_MOVE_BLOCK):
                     if(len(inputs) == 4):
                         if(has_full_block_overlap() or get_new_player_position() == None):
                             message_text = "Bloco inválido"
@@ -356,48 +459,56 @@ while True:
                             continue
                         register_inputs(game_state)
 
-                        if(game_state == GameState.RED_TO_MOVE_BLOCK):
-                            enemy_color = 'b'
-                        else:
-                            enemy_color = 'r'
-
-                        possible_moves_for_enemy = check_possible_moves_for(enemy_color)
-                        if(len(possible_moves_for_enemy) == 0):
-                            print("acabou")
-                            pygame.quit()
-
-                        print("Movimentos possíveis pro adversário")
-                        for possible_move in possible_moves_for_enemy:
-                            print(possible_move)
-
                         advanceState()
                         inputs = []
-                elif(game_state == GameState.RED_TO_MOVE_COIN or game_state == GameState.BLUE_TO_MOVE_COIN):
+                elif(game_state == GameState.BLUE_TO_MOVE_BLOCK):
+                    best_block_move_ai = get_best_block_move()
+                    blue_player_position = best_block_move_ai
+                    remove_previous_block('b')
+                    draw_from_position(best_block_move_ai, 'b', img_blue_square)
+
+                    advanceState()
+                    inputs = []
+                elif(game_state == GameState.RED_TO_MOVE_COIN):
                     register_inputs(game_state)
 
                     if(game_state == GameState.RED_TO_MOVE_COIN):
                         enemy_color = 'b'
                     else:
                         enemy_color = 'r'
-                    
-                    possible_moves_for_enemy = check_possible_moves_for(enemy_color)
-                    if(len(possible_moves_for_enemy) == 0):
-                            print("acabou")
-                            pygame.quit()
-
-                    print("Movimentos possíveis pro adversário")
-                    for possible_move in possible_moves_for_enemy:
-                        print(possible_move)
                 
                     advanceState()
                     inputs = []
                     chosen_coin = 9
+                elif(game_state == GameState.BLUE_TO_MOVE_COIN):
+                    best_coin_move_ai = get_best_coin_move()
+                    if(best_coin_move_ai['coin'] == 1):
+                        remove_previous_coin(1)
+                        cells[best_coin_move_ai['position']['x']][best_coin_move_ai['position']['y']].has_coin = True
+                        load_image(best_coin_move_ai['position']['x'], best_coin_move_ai['position']['y'], img_coin1)
+                        coin1_position = {'x': best_coin_move_ai['position']['x'], 'y': best_coin_move_ai['position']['y']}
+                    else:
+                        remove_previous_coin(2)
+                        cells[best_coin_move_ai['position']['x']][best_coin_move_ai['position']['y']].has_coin = True
+                        load_image(best_coin_move_ai['position']['x'], best_coin_move_ai['position']['y'], img_coin2)
+                        coin2_position = {'x': best_coin_move_ai['position']['x'], 'y': best_coin_move_ai['position']['y']}
+
+                    advanceState()
+                    inputs = []
+                    chosen_coin = 9
+
+                possible_moves_for_enemy = check_possible_moves_for(enemy_color)
+                if(len(possible_moves_for_enemy) == 0):
+                    game_over = True
+                    if(enemy_color == 'r'):
+                        message_text = "Jogador Azul ganhou!"
+                    else:
+                        message_text = "Jogador Vermelho ganhou!"
 
     screen.fill(WHITE)
     draw_grid()
     draw_buttons_and_message()
     
-    # Draw cells
     for x in range(GRID_SIZE):
         for y in range(GRID_SIZE):
             if img_cells[x][y]:
