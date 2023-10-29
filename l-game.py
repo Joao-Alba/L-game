@@ -225,23 +225,34 @@ def is_block_valid():
                 current_block.append({'x': i, 'y': j})
 
 def check_win():
+    check_possible_move_for = ''
+    if(game_state == GameState.RED_TO_MOVE_BLOCK or game_state == GameState.RED_TO_MOVE_COIN):
+        check_possible_move_for = 'b'
+    else:
+        check_possible_move_for = 'r'
     for i in range(len(cells)):
         for j in range(len(cells[i])):
             for direction in Direction:
                 direction_possible = True
+                cell_overlap_number = 0
                 for move in direction.value:
                     target_x = i + move['x']
                     target_y = j + move['y']
 
-                    if(target_x < 0 or target_y < 0):
-                        continue
-
-                    if(cells[target_x][target_y].has_coin or cells[target_x][target_y].color != 'w'):
+                    if(target_x < 0 or target_x > 3 or target_y < 0 or target_y > 3):
                         direction_possible = False
                         break
 
-                if(direction_possible):
+                    if(cells[target_x][target_y].has_coin or (cells[target_x][target_y].color != 'w' and cells[target_x][target_y].color != check_possible_move_for)):
+                        direction_possible = False
+                        break
+
+                    if(cells[target_x][target_y].color == check_possible_move_for):
+                            cell_overlap_number += 1
+
+                if(direction_possible and cell_overlap_number < 4):
                     return False
+                cell_overlap_number = 0
     return True
 
 def draw_starting_objects():
@@ -297,8 +308,6 @@ while True:
 
                 inputs.append({"x": cell_x, "y": cell_y})
 
-                print(str(cell_x) + " - " + str(cell_y))
-
                 if(game_state == GameState.RED_TO_MOVE_BLOCK or game_state == GameState.BLUE_TO_MOVE_BLOCK):
                     if(len(inputs) == 4):
                         if(has_full_block_overlap()):
@@ -308,12 +317,14 @@ while True:
                             continue
                         register_inputs(game_state)
                         if(check_win()):
+                            print("acabou")
                             pygame.quit()
                         advanceState()
                         inputs = []
                 elif(game_state == GameState.RED_TO_MOVE_COIN or game_state == GameState.BLUE_TO_MOVE_COIN):
                     register_inputs(game_state)
                     if(check_win()):
+                        print("acabou")
                         pygame.quit()
                     advanceState()
                     inputs = []
