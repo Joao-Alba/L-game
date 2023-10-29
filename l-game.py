@@ -56,15 +56,15 @@ class Cell:
 
 game_state = GameState.BLUE_TO_MOVE_COIN
 
-#red_player_position = {"start": {"x": 0, "y": 1}, "direction": Direction.HORIZONTAL_MIRROR_Y}
-#blue_player_position = {"start":  {"x": 3, "y": 2}, "direction": Direction.HORIZONTAL_MIRROR_X}
-#coin1_position = {"x": 0, "y": 0}
-#coin2_position = {"x": 3, "y": 3}
-
-red_player_position = {"start": {"x": 1, "y": 2}, "direction": Direction.VERTICAL}
-blue_player_position = {"start":  {"x": 2, "y": 0}, "direction": Direction.VERTICAL_MIRROR_X_Y}
-coin1_position = {"x": 2, "y": 1}
+red_player_position = {"start": {"x": 0, "y": 1}, "direction": Direction.HORIZONTAL_MIRROR_Y}
+blue_player_position = {"start":  {"x": 3, "y": 2}, "direction": Direction.HORIZONTAL_MIRROR_X}
+coin1_position = {"x": 0, "y": 0}
 coin2_position = {"x": 3, "y": 3}
+
+#red_player_position = {"start": {"x": 1, "y": 2}, "direction": Direction.VERTICAL}
+#blue_player_position = {"start":  {"x": 2, "y": 0}, "direction": Direction.VERTICAL_MIRROR_X_Y}
+#coin1_position = {"x": 2, "y": 1}
+#coin2_position = {"x": 3, "y": 3}
 
 #draw start on screen
 
@@ -313,13 +313,14 @@ while True:
         elif event.type == pygame.MOUSEBUTTONDOWN:
             x, y = event.pos
             if x >= GRID_SIZE * CELL_SIZE:
-                if y < CELL_SIZE:
-                    chosen_coin = 1
-                elif y < 2 * CELL_SIZE:
-                    chosen_coin = 2
-                elif y < 3 * CELL_SIZE:
-                    chosen_coin = 0
-                    advanceState()
+                if(game_state == GameState.RED_TO_MOVE_COIN or game_state == GameState.BLUE_TO_MOVE_COIN):
+                    if y < CELL_SIZE:
+                        chosen_coin = 1
+                    elif y < 2 * CELL_SIZE:
+                        chosen_coin = 2
+                    elif y < 3 * CELL_SIZE:
+                        chosen_coin = 0
+                        advanceState()
 
             else:
                 cell_x = x // CELL_SIZE
