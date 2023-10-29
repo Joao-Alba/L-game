@@ -141,19 +141,19 @@ def register_inputs(game_state):
         for _input in inputs:
             cells[_input['x']][_input['y']].color = 'r'
             load_image(_input['x'], _input['y'], img_red_square)
-            #Arrumar positions
-            red_player_position['start']['x'] = _input['x']
-            red_player_position['start']['y'] = _input['y']
-            red_player_position['direction'] = Direction.HORIZONTAL_MIRROR_Y
+        new_player_position = get_new_player_position()
+        red_player_position['start']['x'] = new_player_position['start']['x']
+        red_player_position['start']['y'] = new_player_position['start']['y']
+        red_player_position['direction'] = new_player_position['direction']
     elif(game_state == GameState.BLUE_TO_MOVE_BLOCK):
         remove_previous_block('b')
         for _input in inputs:
             cells[_input['x']][_input['y']].color = 'b'
             load_image(_input['x'], _input['y'], img_blue_square)
-            #Arrumar positions
-            blue_player_position['start']['x'] = _input['x']
-            blue_player_position['start']['y'] = _input['y']
-            blue_player_position['direction'] = Direction.HORIZONTAL_MIRROR_Y
+        new_player_position = get_new_player_position()
+        blue_player_position['start']['x'] = new_player_position['start']['x']
+        blue_player_position['start']['y'] = new_player_position['start']['y']
+        blue_player_position['direction'] = new_player_position['direction']
     elif(game_state == GameState.RED_TO_MOVE_COIN or game_state == GameState.BLUE_TO_MOVE_COIN):
         remove_previous_coin(chosen_coin)
         for _input in inputs:
@@ -260,34 +260,40 @@ def check_possible_moves_for(target_color):
                 cell_overlap_number = 0
     return possible_moves
 
-def is_block_invalid():
+def get_new_player_position():
     for possible_start_cell in inputs:
-        direction_valid = False
-        for direction in Direction:
-            found_moves = 0
-            for move in direction.value:
-                target_x = possible_start_cell['x'] + move['x']
-                target_y = possible_start_cell['y'] + move['y']
+        found_direction = get_block_direction(possible_start_cell['x'], possible_start_cell['y'])
+        if(found_direction != None):
+            return {"start": {"x": possible_start_cell['x'], "y": possible_start_cell['y']}, "direction": found_direction}
+    return None
 
-                if(target_x < 0 or target_x > 3 or target_y < 0 or target_y > 3):
-                    break
+def get_block_direction(start_x, start_y):
+    direction_valid = False
+    for direction in Direction:
+        found_moves = 0
+        for move in direction.value:
+            target_x = start_x + move['x']
+            target_y = start_y + move['y']
 
-                found_move = False
-                for _input in inputs:
-                    if(_input['x'] == target_x and _input['y'] == target_y):
-                        found_move = True
-                        found_moves += 1
-                        break
-                
-                if(not found_move):
-                    break
-            if(found_moves == 4):
-                direction_valid = True
+            if(target_x < 0 or target_x > 3 or target_y < 0 or target_y > 3):
                 break
-        if(direction_valid):
-            return False
-    
-    return True
+
+            found_move = False
+            for _input in inputs:
+                if(_input['x'] == target_x and _input['y'] == target_y):
+                    found_move = True
+                    found_moves += 1
+                    break
+            
+            if(not found_move):
+                break
+        if(found_moves == 4):
+            direction_valid = True
+            break
+    if(direction_valid):
+        return direction
+    return None
+
 def draw_starting_objects():
     for move in red_player_position['direction'].value:
         x = red_player_position['start']['x'] + move['x']
@@ -344,7 +350,7 @@ while True:
 
                 if(game_state == GameState.RED_TO_MOVE_BLOCK or game_state == GameState.BLUE_TO_MOVE_BLOCK):
                     if(len(inputs) == 4):
-                        if(has_full_block_overlap() or is_block_invalid()):
+                        if(has_full_block_overlap() or get_new_player_position() == None):
                             message_text = "Bloco inválido"
                             inputs = []
                             continue
