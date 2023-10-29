@@ -56,9 +56,14 @@ class Cell:
 
 game_state = GameState.BLUE_TO_MOVE_COIN
 
-red_player_position = {"start": {"x": 0, "y": 1}, "direction": Direction.HORIZONTAL_MIRROR_Y}
-blue_player_position = {"start":  {"x": 3, "y": 2}, "direction": Direction.HORIZONTAL_MIRROR_X}
-coin1_position = {"x": 0, "y": 0}
+#red_player_position = {"start": {"x": 0, "y": 1}, "direction": Direction.HORIZONTAL_MIRROR_Y}
+#blue_player_position = {"start":  {"x": 3, "y": 2}, "direction": Direction.HORIZONTAL_MIRROR_X}
+#coin1_position = {"x": 0, "y": 0}
+#coin2_position = {"x": 3, "y": 3}
+
+red_player_position = {"start": {"x": 1, "y": 2}, "direction": Direction.VERTICAL}
+blue_player_position = {"start":  {"x": 2, "y": 0}, "direction": Direction.VERTICAL_MIRROR_X_Y}
+coin1_position = {"x": 2, "y": 1}
 coin2_position = {"x": 3, "y": 3}
 
 #draw start on screen
@@ -224,12 +229,8 @@ def is_block_valid():
             if(cells[i][j].color == current_color):
                 current_block.append({'x': i, 'y': j})
 
-def check_win():
-    check_possible_move_for = ''
-    if(game_state == GameState.RED_TO_MOVE_BLOCK or game_state == GameState.RED_TO_MOVE_COIN):
-        check_possible_move_for = 'b'
-    else:
-        check_possible_move_for = 'r'
+def check_possible_moves_for(target_color):
+    possible_moves = []
     for i in range(len(cells)):
         for j in range(len(cells[i])):
             for direction in Direction:
@@ -243,18 +244,46 @@ def check_win():
                         direction_possible = False
                         break
 
-                    if(cells[target_x][target_y].has_coin or (cells[target_x][target_y].color != 'w' and cells[target_x][target_y].color != check_possible_move_for)):
+                    if(cells[target_x][target_y].has_coin or (cells[target_x][target_y].color != 'w' and cells[target_x][target_y].color != target_color)):
                         direction_possible = False
                         break
 
-                    if(cells[target_x][target_y].color == check_possible_move_for):
+                    if(cells[target_x][target_y].color == target_color):
                             cell_overlap_number += 1
 
                 if(direction_possible and cell_overlap_number < 4):
-                    return False
+                    possible_moves.append({"start": {"x": i, "y": j}, "direction": direction})
                 cell_overlap_number = 0
-    return True
+    return possible_moves
 
+def is_block_invalid():
+    for possible_start_cell in inputs:
+        direction_valid = False
+        for direction in Direction:
+            found_moves = 0
+            for move in direction.value:
+                target_x = possible_start_cell['x'] + move['x']
+                target_y = possible_start_cell['y'] + move['y']
+
+                if(target_x < 0 or target_x > 3 or target_y < 0 or target_y > 3):
+                    break
+
+                found_move = False
+                for _input in inputs:
+                    if(_input['x'] == target_x and _input['y'] == target_y):
+                        found_move = True
+                        found_moves += 1
+                        break
+                
+                if(not found_move):
+                    break
+            if(found_moves == 4):
+                direction_valid = True
+                break
+        if(direction_valid):
+            return False
+    
+    return True
 def draw_starting_objects():
     for move in red_player_position['direction'].value:
         x = red_player_position['start']['x'] + move['x']
@@ -296,7 +325,7 @@ while True:
                 cell_x = x // CELL_SIZE
                 cell_y = y // CELL_SIZE
 
-                if((game_state == GameState.RED_TO_MOVE_COIN or game_state == GameState.BLUE_TO_MOVE_COIN) and chosen_coin == 9):
+                if((game_state == GameState.RED_TO_MOVE_COIN or game_state == GameState.BLUE_TO_MOVE_COIN) and (chosen_coin == 9 or chosen_coin == 0)):
                     message_before_invalid = message_text
                     message_text = "Escolha uma moeda primeiro"
                     continue
@@ -310,24 +339,48 @@ while True:
 
                 if(game_state == GameState.RED_TO_MOVE_BLOCK or game_state == GameState.BLUE_TO_MOVE_BLOCK):
                     if(len(inputs) == 4):
-                        if(has_full_block_overlap()):
-                            # or is_block_invalid()
+                        if(has_full_block_overlap() or is_block_invalid()):
                             message_text = "Bloco inválido"
                             inputs = []
                             continue
                         register_inputs(game_state)
-                        if(check_win()):
+
+                        if(game_state == GameState.RED_TO_MOVE_BLOCK):
+                            enemy_color = 'b'
+                        else:
+                            enemy_color = 'r'
+
+                        possible_moves_for_enemy = check_possible_moves_for(enemy_color)
+                        if(len(possible_moves_for_enemy) == 0):
                             print("acabou")
                             pygame.quit()
+
+                        print("Movimentos possíveis pro adversário")
+                        for possible_move in possible_moves_for_enemy:
+                            print(possible_move)
+
                         advanceState()
                         inputs = []
                 elif(game_state == GameState.RED_TO_MOVE_COIN or game_state == GameState.BLUE_TO_MOVE_COIN):
                     register_inputs(game_state)
-                    if(check_win()):
-                        print("acabou")
-                        pygame.quit()
+
+                    if(game_state == GameState.RED_TO_MOVE_COIN):
+                        enemy_color = 'b'
+                    else:
+                        enemy_color = 'r'
+                    
+                    possible_moves_for_enemy = check_possible_moves_for(enemy_color)
+                    if(len(possible_moves_for_enemy) == 0):
+                            print("acabou")
+                            pygame.quit()
+
+                    print("Movimentos possíveis pro adversário")
+                    for possible_move in possible_moves_for_enemy:
+                        print(possible_move)
+                
                     advanceState()
                     inputs = []
+                    chosen_coin = 9
 
     screen.fill(WHITE)
     draw_grid()
