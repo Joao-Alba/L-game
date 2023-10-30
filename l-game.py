@@ -1,3 +1,20 @@
+#Alunos: Ana Caroline Cipriani dos Santos, João Arthur Pereira Alba e Nicole Taufenbach.
+
+#Regras:
+# O tabuleiro é composto por uma matriz 4x4, dois blocos em formato de L, e duas moedas
+# Cada jogador, na sua rodada, pode mexer seu bloco L para qualquer posição disponível, desde que não seja a mesma posição atual, não sobreponha o L adversário e não sobreponha nenhuma moeda. 
+# O bloco não precisa ter um caminho de acesso ao destino, ele pode ser "levantado", reorientado em qualquer sentido, e colocado em outro lugar.
+# O tabuleiro também possui duas moedas neutras. Cada jogador, após mover seu L, pode mover uma ou nenhuma moeda para qualquer espaço livre do tabuleiro.
+# O jogo acaba quando um dos jogadores não tiver mais como mexer seu L, pois todas as opções estarão bloqueadas, sendo assim, esse jogador perde.
+#
+#Como jogar:
+# O jogador humano controla o L vermelho, e começa o jogo. Para mover seu L, você deve clicar individualmente em cada célula da matriz onde deseja formar seu L. Ou seja, sua jogada deve ser composta
+# de 4 cliques em células que sejam vizinhas, e criem o formato de um L. Caso você tente usar uma célula ocupada pelo L adversário ou por uma moeda, seu clique sera ignorado e a mensagem "input inválio" será mostrada na tela.
+# Caso, ao escolher 4 células válidas, o bloco resultante não forme um L, todos os cliques serão descartados e você deve clicar em todas as células desejadas novamente. A mensagem "bloco inválido" será mostrada na tela.
+# Após mover seu L, você deve escolher uma das moedas para movimentar, utilizando os botões a direita da tela. Após escolher uma moeda, você deve clicar em uma célula vazia para movimentar a moeda escolhida. Você também pode escolher não movimentar nenhuma moeda. 
+# Após o jogador vermelho terminar suas jogadas, o jogador azul inicia seu turno. Neste caso, o jogador azul é controlado por uma IA, que escolherá seus movimentos automaticamente. Para que a IA faça sua jogada de movimentação de bloco, é necessário
+# clicar em qualquer lugar da matriz. Após a IA movimentar seu L, clique na matriz novamente para a IA movimentar sua moeda. Após isso, o turno volta a você, e o jogo segue até que algum jogador não tenha mais opções para movimentar seu L
+
 import pygame
 import sys
 from enum import Enum
