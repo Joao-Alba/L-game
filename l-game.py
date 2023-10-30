@@ -2,14 +2,15 @@ import pygame
 import sys
 from enum import Enum
 
-# Initialize Pygame
 pygame.init()
 
-# Set up display
+# Display
 screen = pygame.display.set_mode((750, 400))
 pygame.display.set_caption("L-GAME")
+GRID_SIZE = 4
+CELL_SIZE = 100
 
-# Colors
+# Cores
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GRAY = (200, 200, 200)
@@ -17,7 +18,7 @@ GRAY2 = (150, 150, 150)
 GREEN = (34, 177, 76)
 YELLOW = (255, 242, 0)
 
-# Block directions
+# Formatos do L
 class Direction(Enum):
     VERTICAL = [{'x': 0, 'y': 0}, {'x': -1, 'y': 0}, {'x': -1, 'y': -1}, {'x': -1, 'y': -2}]
     VERTICAL_MIRROR_X = [{'x': 0, 'y': 0}, {'x': -1, 'y': 0}, {'x': -1, 'y': 1}, {'x': -1, 'y': 2}]
@@ -28,11 +29,7 @@ class Direction(Enum):
     HORIZONTAL_MIRROR_Y = [{'x': 0, 'y': 0}, {'x': 0, 'y': 1}, {'x': 1, 'y': 1}, {'x': 2, 'y': 1}]
     HORIZONTAL_MIRROR_X_Y = [{'x': 0, 'y': 0}, {'x': 0, 'y': -1}, {'x': 1, 'y': -1}, {'x': 2, 'y': -1}]
 
-# Define grid properties
-GRID_SIZE = 4
-CELL_SIZE = 100
-
-# Images
+# Imagens
 img_red_square = pygame.image.load("resources/red_square.png").convert()
 img_blue_square = pygame.image.load("resources/blue_square.png").convert()
 img_white_square = pygame.image.load("resources/white_square.png").convert()
@@ -53,9 +50,9 @@ class Cell:
         self.color = 'w'
         self.has_coin = False
 
-
 game_state = GameState.BLUE_TO_MOVE_COIN
 
+# Posições iniciais
 red_player_position = {"start": {"x": 0, "y": 1}, "direction": Direction.HORIZONTAL_MIRROR_Y}
 blue_player_position = {"start":  {"x": 3, "y": 2}, "direction": Direction.HORIZONTAL_MIRROR_X}
 coin1_position = {"x": 0, "y": 0}
@@ -66,6 +63,7 @@ coin2_position = {"x": 3, "y": 3}
 #coin1_position = {"x": 2, "y": 1}
 #coin2_position = {"x": 3, "y": 3}
 
+# Manter o estado atual do jogo
 message_text = "Vez do jogador vermelho"
 def advanceState():
     global game_state
@@ -85,6 +83,7 @@ def advanceState():
             message_text = "Vez do jogador vermelho mexer o L"
 advanceState()
 
+# Matrizes de controle
 cells = [[Cell(0, 0) for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
 img_cells = [[None for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
 
@@ -93,15 +92,17 @@ for i in range(len(cells)):
         cells[i][j].x = i
         cells[i][j].y = j
 
-
+# Carrega uma imagem em uma celula
 def load_image(cell_x, cell_y, image):
     img_cells[cell_x][cell_y] = image
 
+# Desenha matriz
 def draw_grid():
     for i in range(GRID_SIZE + 1):
         pygame.draw.line(screen, BLACK, (i * CELL_SIZE, 0), (i * CELL_SIZE, CELL_SIZE * GRID_SIZE), 2)
         pygame.draw.line(screen, BLACK, (0, i * CELL_SIZE), (CELL_SIZE * GRID_SIZE, i * CELL_SIZE), 2)
 
+# Desenha botões e mensagem
 def draw_buttons_and_message():
     button_height = 80
     button_width = 300
@@ -126,6 +127,7 @@ def draw_buttons_and_message():
     message = font.render(message_text, True, BLACK)
     screen.blit(message, (button_start_x + 10, message_y + 5))
 
+# Recebe os inputs do jogador e atualiza as variáveis de controles
 inputs = []
 def register_inputs(game_state):
     global inputs
@@ -134,7 +136,7 @@ def register_inputs(game_state):
         for _input in inputs:
             cells[_input['x']][_input['y']].color = 'r'
             load_image(_input['x'], _input['y'], img_red_square)
-        new_player_position = get_new_player_position()
+        new_player_position = get_new_block_position()
         red_player_position['start']['x'] = new_player_position['start']['x']
         red_player_position['start']['y'] = new_player_position['start']['y']
         red_player_position['direction'] = new_player_position['direction']
@@ -143,7 +145,7 @@ def register_inputs(game_state):
         for _input in inputs:
             cells[_input['x']][_input['y']].color = 'b'
             load_image(_input['x'], _input['y'], img_blue_square)
-        new_player_position = get_new_player_position()
+        new_player_position = get_new_block_position()
         blue_player_position['start']['x'] = new_player_position['start']['x']
         blue_player_position['start']['y'] = new_player_position['start']['y']
         blue_player_position['direction'] = new_player_position['direction']
@@ -160,6 +162,7 @@ def register_inputs(game_state):
                 coin2_position['y'] = _input['y']
                 load_image(_input['x'], _input['y'], img_coin2)
         
+# Remove da tela o bloco da cor especificada
 def remove_previous_block(color):
     for i in range(len(cells)):
         for j in range(len(cells[i])):
@@ -167,6 +170,7 @@ def remove_previous_block(color):
                 cells[i][j].color = 'w'
                 load_image(i, j, img_white_square)
 
+# Remove da tela a moeda especificada
 def remove_previous_coin(chosen_coin):
     if(chosen_coin == 1):
         coin = coin1_position
@@ -176,6 +180,7 @@ def remove_previous_coin(chosen_coin):
     cells[coin['x']][coin['y']].has_coin = False
     load_image(coin['x'], coin['y'], img_white_square)
 
+# Verifica se o input é valido
 def input_invalid(target_x, target_y):
     current_color = ''
 
@@ -195,6 +200,7 @@ def input_invalid(target_x, target_y):
         if(_input['x'] == target_x and _input['y'] == target_y):
             return True
     
+# Verifica se o L desenhado está completamente em cima de um L já existente
 def has_full_block_overlap():
     current_color = ''
 
@@ -220,12 +226,7 @@ def has_full_block_overlap():
             return False
     return True
 
-def is_block_valid():
-    for i in range(len(cells)):
-        for j in range(len(cells[i])):
-            if(cells[i][j].color == current_color):
-                current_block.append({'x': i, 'y': j})
-
+# Retorna todos as posições possíveis (célula inicial e direção) para a cor especificada 
 def check_possible_moves_for(target_color):
     possible_moves = []
     for i in range(len(cells)):
@@ -253,13 +254,15 @@ def check_possible_moves_for(target_color):
                 cell_overlap_number = 0
     return possible_moves
 
-def get_new_player_position():
+# Retorna a posição do bloco novo baseado nos inputs
+def get_new_block_position():
     for possible_start_cell in inputs:
         found_direction = get_block_direction(possible_start_cell['x'], possible_start_cell['y'])
         if(found_direction != None):
             return {"start": {"x": possible_start_cell['x'], "y": possible_start_cell['y']}, "direction": found_direction}
     return None
 
+# Calcula a direção de um block
 def get_block_direction(start_x, start_y):
     direction_valid = False
     for direction in Direction:
@@ -287,6 +290,7 @@ def get_block_direction(start_x, start_y):
         return direction
     return None
 
+# Desenha os objetos iniciais na tela pelas suas posições
 def draw_starting_objects():
     draw_from_position(red_player_position, 'r', img_red_square)
     draw_from_position(blue_player_position, 'b', img_blue_square)
@@ -296,6 +300,7 @@ def draw_starting_objects():
     load_image(coin2_position['x'], coin2_position['y'], img_coin2)
     return
 
+# Atualiza as variáveis de controle pela posição especificada
 def draw_from_position(player_position, player_color, player_color_img):
     for move in player_position['direction'].value:
         x = player_position['start']['x'] + move['x']
@@ -303,6 +308,7 @@ def draw_from_position(player_position, player_color, player_color_img):
         cells[x][y].color = player_color
         load_image(x, y, player_color_img)
 
+# Calcula o melhor movimento de bloco para a IA
 def get_best_block_move():
     current_color = ''
     enemy_color = ''
@@ -337,6 +343,7 @@ def get_best_block_move():
     draw_from_position(current_player_position, current_color, current_color_img)
     return best_current_player_move
 
+# Calcula o melhor movimento de moeda para a IA
 def get_best_coin_move():
     current_color = ''
     enemy_color = ''
@@ -356,6 +363,7 @@ def get_best_coin_move():
     else:
         return {"coin": 2, "position": {'x': best_position_coin2['x'], 'y': best_position_coin2['y']}}
 
+# Descobre a melhor escolha de moeda para mexer
 def try_every_position_coin(coin):
     least_possible_moves_enemy_player_coin = 20
     return_best_coin_position = None
@@ -406,11 +414,13 @@ def try_every_position_coin(coin):
 
     return return_best_coin_position
 
+# Variáveis de controle do loop
 message_before_invalid = ''
 chosen_coin = 9
 draw_starting_objects()
 game_over = False
 
+# Loop principal
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -453,7 +463,7 @@ while True:
 
                 if(game_state == GameState.RED_TO_MOVE_BLOCK):
                     if(len(inputs) == 4):
-                        if(has_full_block_overlap() or get_new_player_position() == None):
+                        if(has_full_block_overlap() or get_new_block_position() == None):
                             message_text = "Bloco inválido"
                             inputs = []
                             continue
