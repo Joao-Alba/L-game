@@ -430,6 +430,8 @@ while True:
             continue
         elif event.type == pygame.MOUSEBUTTONDOWN:
             x, y = event.pos
+
+            # Input na área dos botões
             if x >= GRID_SIZE * CELL_SIZE:
                 if(game_state == GameState.RED_TO_MOVE_COIN):
                     if y < CELL_SIZE:
@@ -444,6 +446,7 @@ while True:
                 cell_x = x // CELL_SIZE
                 cell_y = y // CELL_SIZE
 
+                # Validações de input
                 if((game_state == GameState.RED_TO_MOVE_COIN) and (chosen_coin == 9 or chosen_coin == 0)):
                     message_before_invalid = message_text
                     message_text = "Escolha uma moeda primeiro"
@@ -461,6 +464,7 @@ while True:
                 else:
                     enemy_color = 'r'
 
+                # Vez do vermelho de mexer o L. Aguarda até que tenha 4 valores no input para calcular a posição nova do L. Depois, limpa o input e avança o estado do jogo para o vermelho mexer a moeda
                 if(game_state == GameState.RED_TO_MOVE_BLOCK):
                     if(len(inputs) == 4):
                         if(has_full_block_overlap() or get_new_block_position() == None):
@@ -471,6 +475,7 @@ while True:
 
                         advanceState()
                         inputs = []
+                # Vez do azul mexer o L. Controlado pela IA. Precisa dar um cliquei na matriz para a IA iniciar seu movimento
                 elif(game_state == GameState.BLUE_TO_MOVE_BLOCK):
                     best_block_move_ai = get_best_block_move()
                     blue_player_position = best_block_move_ai
@@ -479,6 +484,7 @@ while True:
 
                     advanceState()
                     inputs = []
+                # Vez do vermelho mexer a moeda. Necessário escolher a moeda pelos botões antes
                 elif(game_state == GameState.RED_TO_MOVE_COIN):
                     register_inputs(game_state)
 
@@ -490,6 +496,7 @@ while True:
                     advanceState()
                     inputs = []
                     chosen_coin = 9
+                # Vez do azul mexer a moeda. Controlado pela IA. Precisa dar um cliquei na matriz para a IA iniciar seu movimento
                 elif(game_state == GameState.BLUE_TO_MOVE_COIN):
                     best_coin_move_ai = get_best_coin_move()
                     if(best_coin_move_ai['coin'] == 1):
@@ -507,6 +514,7 @@ while True:
                     inputs = []
                     chosen_coin = 9
 
+                # Verifica se existe um ganhador
                 possible_moves_for_enemy = check_possible_moves_for(enemy_color)
                 if(len(possible_moves_for_enemy) == 0):
                     game_over = True
